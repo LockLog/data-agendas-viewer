@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Tareas con Google Drive</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-blue: #1a73e8;
+            --dark-blue: #0d47a1;
+            --light-blue: #e8f0fe;
+            --accent-orange: #FF8C42;
+            --dark-orange: #E67339;
+            --text-dark: #202124;
+            --text-medium: #5f6368;
+            --text-light: #ffffff;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            --border-radius: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary-blue), var(--dark-blue));
+            color: var(--text-light);
+            padding: 25px 0;
+            box-shadow: var(--shadow);
+            margin-bottom: 30px;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1 {
+            font-size: 28px;
+            font-weight: 500;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo i {
+            font-size: 32px;
+            color: var(--accent-orange);
+        }
+
+        .upload-container {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 30px;
+            text-align: center;
+            border: 2px dashed var(--light-blue);
+            transition: all 0.3s;
+        }
+
+        .upload-container:hover {
+            border-color: var(--primary-blue);
+        }
+
+        .upload-btn {
+            background-color: var(--accent-orange);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+            margin-top: 15px;
+        }
+
+        .upload-btn:hover {
+            background-color: var(--dark-orange);
+            transform: translateY(-2px);
+        }
+
+        .file-info {
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--text-medium);
+        }
+
+        .files-list {
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .file-item {
+            padding: 15px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .file-item:last-child {
+            border-bottom: none;
+        }
+
+        .file-name {
+            font-weight: 500;
+            color: var(--primary-blue);
+        }
+
+        .file-date {
+            font-size: 14px;
+            color: var(--text-medium);
+        }
+
+        .file-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            background-color: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .action-btn:hover {
+            background-color: var(--dark-blue);
+        }
+
+        .action-btn.orange {
+            background-color: var(--accent-orange);
+        }
+
+        .action-btn.orange:hover {
+            background-color: var(--dark-orange);
+        }
+
+        .tasks-container {
+            display: none;
+            background-color: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .task-category {
+            margin-bottom: 25px;
+            border: 1px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            overflow: hidden;
+        }
+
+        .task-header {
+            background-color: var(--light-blue);
+            color: var(--primary-blue);
+            padding: 15px 20px;
+            font-weight: 500;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .task-header:hover {
+            background-color: #dde8fc;
+        }
+
+        .task-header i {
+            transition: transform 0.3s;
+        }
+
+        .task-header.collapsed i {
+            transform: rotate(-90deg);
+        }
+
+        .task-list {
+            padding: 0;
+            max-height: 500px;
+            overflow-y: auto;
+            transition: max-height 0.3s ease-out;
+        }
+
+        .task-list.collapsed {
+            max-height: 0;
+            overflow: hidden;
+        }
+
+        .task-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item:hover {
+            background-color: #f8f9fa;
+        }
+
+        .task-name {
+            flex-grow: 1;
+        }
+
+        .task-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .task-btn {
+            background-color: var(--accent-orange);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .task-btn:hover {
+            background-color: var(--dark-orange);
+        }
+
+        .task-btn.completed {
+            background-color: #34a853;
+        }
+
+        .task-btn.completed:hover {
+            background-color: #2d9249;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-medium);
+            font-size: 14px;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+
+            .file-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+
+            .file-actions {
+                align-self: flex-end;
+            }
+
+            .task-item {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .task-actions {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h1>Gestor de Tareas con Drive</h1>
+            </div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="upload-container" id="dropZone">
+            <i class="fas fa-folder-open" style="font-size: 48px; color: var(--primary-blue); margin-bottom: 15px;"></i>
+            <h2>Sube archivos a Google Drive</h2>
+            <p>Arrastra archivos aquí o haz clic en el botón</p>
+            <input type="file" id="fileInput" style="display: none;" multiple>
+            <button class="upload-btn" id="uploadBtn">
+                <i class="fas fa-upload"></i>
+                Seleccionar archivos
+            </button>
+            <div class="file-info" id="fileInfo">No se han seleccionado archivos</div>
+        </div>
+
+        <div class="files-list" id="filesList">
+            <h2 style="margin-bottom: 20px; color: var(--primary-blue);">Archivos en Drive</h2>
+            <div id="filesContainer">
+                <!-- Los archivos se cargarán aquí -->
+            </div>
+        </div>
+
+        <div class="tasks-container" id="tasksContainer">
+            <h2 style="margin-bottom: 20px; color: var(--primary-blue);">Tareas para: <span id="currentFileName"></span></h2>
+            
+            <div class="task-category">
+                <div class="task-header" onclick="toggleCategory('availability')">
+                    <span><i class="fas fa-clipboard-check" style="margin-right: 10px;"></i> Revisar Disponibilidad de Box</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="task-list" id="availabilityTasks">
+                    <!-- Tareas se agregarán aquí -->
+                </div>
+            </div>
+            
+            <div class="task-category">
+                <div class="task-header" onclick="toggleCategory('validation')">
+                    <span><i class="fas fa-check-circle" style="margin-right: 10px;"></i> Validación</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="task-list" id="validationTasks">
+                    <!-- Tareas se agregarán aquí -->
+                </div>
+            </div>
+            
+            <div class="task-category">
+                <div class="task-header" onclick="toggleCategory('return')">
+                    <span><i class="fas fa-undo" style="margin-right: 10px;"></i> Devolución</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="task-list" id="returnTasks">
+                    <!-- Tareas se agregarán aquí -->
+                </div>
+            </div>
+            
+            <div class="task-category">
+                <div class="task-header" onclick="toggleCategory('implementation')">
+                    <span><i class="fas fa-cogs" style="margin-right: 10px;"></i> Implementación</span>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="task-list" id="implementationTasks">
+                    <!-- Tareas se agregarán aquí -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>© 2023 Gestor de Tareas con Google Drive. Todos los derechos reservados.</p>
+    </footer>
+
+    <script>
+        // Configuración de Google Drive API (debes reemplazar con tus credenciales)
+        const GOOGLE_API_KEY = 'TU_API_KEY';
+        const DRIVE_FOLDER_ID = 'ID_DE_TU_CARPETA_COMPARTIDA';
+        
+        // Variables de estado
+        let files = [];
+        let currentFileId = null;
+        let tasks = {
+            availability: [],
+            validation: [],
+            return: [],
+            implementation: []
+        };
+
+        // Inicialización
+        document.addEventListener('DOMContentLoaded', function() {
+            // Configurar eventos
+            document.getElementById('uploadBtn').addEventListener('click', () => {
+                document.getElementById('fileInput').click();
+            });
+            
+            document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+            
+            // Configurar zona de arrastre
+            const dropZone = document.getElementById('dropZone');
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = 'var(--primary-blue)';
+                dropZone.style.backgroundColor = 'rgba(232, 240, 254, 0.5)';
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.style.borderColor = 'var(--light-blue)';
+                dropZone.style.backgroundColor = 'white';
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = 'var(--light-blue)';
+                dropZone.style.backgroundColor = 'white';
+                
+                if (e.dataTransfer.files.length) {
+                    document.getElementById('fileInput').files = e.dataTransfer.files;
+                    handleFileSelect({ target: document.getElementById('fileInput') });
+                }
+            });
+            
+            // Cargar archivos iniciales (simulado)
+            loadFiles();
+        });
+
+        // Manejar selección de archivos
+        function handleFileSelect(event) {
+            const selectedFiles = event.target.files;
+            if (!selectedFiles.length) return;
+            
+            document.getElementById('fileInfo').textContent = `Subiendo ${selectedFiles.length} archivo(s)...`;
+            showLoading(true);
+            
+            // Simular subida a Google Drive (en un caso real usarías la API)
+            setTimeout(() => {
+                for (let i = 0; i < selectedFiles.length; i++) {
+                    const file = selectedFiles[i];
+                    const newFile = {
+                        id: 'file-' + Date.now() + i,
+                        name: file.name,
+                        date: new Date().toLocaleString(),
+                        size: (file.size / 1024).toFixed(2) + ' KB'
+                    };
+                    files.unshift(newFile);
+                }
+                
+                renderFiles();
+                document.getElementById('fileInfo').textContent = `${selectedFiles.length} archivo(s) subidos correctamente`;
+                showLoading(false);
+            }, 2000);
+        }
+
+        // Cargar lista de archivos (simulado)
+        function loadFiles() {
+            showLoading(true);
+            
+            // Simular carga desde Google Drive
+            setTimeout(() => {
+                files = [
+                    { id: 'file-1', name: 'Documento_Proyecto.xlsx', date: '10/05/2023 14:30', size: '245 KB' },
+                    { id: 'file-2', name: 'Reporte_Final.xlsm', date: '08/05/2023 09:15', size: '512 KB' },
+                    { id: 'file-3', name: 'Datos_Clientes.xlsx', date: '05/05/2023 16:45', size: '178 KB' }
+                ];
+                
+                renderFiles();
+                showLoading(false);
+            }, 1500);
+        }
+
+        // Mostrar/Ocultar loading
+        function showLoading(show) {
+            const filesContainer = document.getElementById('filesContainer');
+            
+            if (show) {
+                filesContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Cargando archivos...</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Renderizar lista de archivos
+        function renderFiles() {
+            const filesContainer = document.getElementById('filesContainer');
+            
+            if (files.length === 0) {
+                filesContainer.innerHTML = '<p>No hay archivos en la carpeta.</p>';
+                return;
+            }
+            
+            let filesHTML = '';
+            
+            files.forEach(file => {
+                filesHTML += `
+                    <div class="file-item">
+                        <div>
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-date">Subido: ${file.date} - ${file.size}</div>
+                        </div>
+                        <div class="file-actions">
+                            <button class="action-btn" onclick="downloadFile('${file.id}', '${file.name}')">
+                                <i class="fas fa-download"></i> Descargar
+                            </button>
+                            <button class="action-btn orange" onclick="showTasks('${file.id}', '${file.name}')">
+                                <i class="fas fa-tasks"></i> Tareas
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            filesContainer.innerHTML = filesHTML;
+        }
+
+        // Descargar archivo
+        function downloadFile(fileId, fileName) {
+            // Simular descarga desde Google Drive
+            alert(`Descargando ${fileName} (ID: ${fileId})`);
+            
+            // En una implementación real usarías:
+            // window.open(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media&key=${GOOGLE_API_KEY}`);
+        }
+
+        // Mostrar tareas para un archivo
+        function showTasks(fileId, fileName) {
+            currentFileId = fileId;
+            document.getElementById('currentFileName').textContent = fileName;
+            
+            // Simular carga de tareas (en un caso real vendrían de una base de datos)
+            tasks = {
+                availability: [
+                    { id: 1, name: 'Verificar disponibilidad de Box A', completed: false },
+                    { id: 2, name: 'Confirmar horarios disponibles', completed: false }
+                ],
+                validation: [
+                    { id: 3, name: 'Validar datos del archivo', completed: false },
+                    { id: 4, name: 'Revisar macros', completed: false }
+                ],
+                return: [
+                    { id: 5, name: 'Preparar informe', completed: false },
+                    { id: 6, name: 'Revisar comentarios', completed: false }
+                ],
+                implementation: [
+                    { id: 7, name: 'Ejecutar macros', completed: false },
+                    { id: 8, name: 'Realizar pruebas', completed: false }
+                ]
+            };
+            
+            renderTasks();
+            document.getElementById('tasksContainer').style.display = 'block';
+            
+            // Desplazar hacia la sección de tareas
+            document.getElementById('tasksContainer').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Renderizar tareas
+        function renderTasks() {
+            renderCategoryTasks('availability', tasks.availability);
+            renderCategoryTasks('validation', tasks.validation);
+            renderCategoryTasks('return', tasks.return);
+            renderCategoryTasks('implementation', tasks.implementation);
+        }
+
+        // Renderizar tareas de una categoría
+        function renderCategoryTasks(categoryId, taskList) {
+            const container = document.getElementById(`${categoryId}Tasks`);
+            container.innerHTML = '';
+            
+            taskList.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task-item';
+                taskElement.innerHTML = `
+                    <div class="task-name">${task.name}</div>
+                    <div class="task-actions">
+                        <button class="task-btn ${task.completed ? 'completed' : ''}" 
+                                onclick="toggleTaskCompletion('${categoryId}', ${task.id})">
+                            ${task.completed ? '<i class="fas fa-check"></i> Completada' : 'Marcar como completada'}
+                        </button>
+                    </div>
+                `;
+                container.appendChild(taskElement);
+            });
+        }
+
+        // Alternar estado de completado de una tarea
+        function toggleTaskCompletion(category, taskId) {
+            const categoryTasks = tasks[category];
+            const taskIndex = categoryTasks.findIndex(task => task.id === taskId);
+            
+            if (taskIndex !== -1) {
+                categoryTasks[taskIndex].completed = !categoryTasks[taskIndex].completed;
+                renderTasks();
+                
+                // Aquí podrías guardar el estado en tu backend
+            }
+        }
+
+        // Alternar visibilidad de categoría
+        function toggleCategory(categoryId) {
+            const header = document.querySelector(`#${categoryId}Tasks`).previousElementSibling;
+            const taskList = document.getElementById(`${categoryId}Tasks`);
+            
+            header.classList.toggle('collapsed');
+            taskList.classList.toggle('collapsed');
+        }
+    </script>
+</body>
+</html>
