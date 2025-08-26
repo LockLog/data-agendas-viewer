@@ -334,13 +334,13 @@
             <div class="card-content">
                 <form id="tareaForm">
                     <div class="form-group">
-                        <label for="titulo"><i class="fas fa-heading"></i> Título de la Tarea</label>
-                        <input type="text" id="titulo" name="titulo" required placeholder="Ingrese el título de la tarea">
+                        <label for="titulo"><i class="fas fa-heading"></i> Título de la Solicitud</label>
+                        <input type="text" id="titulo" name="titulo" required placeholder="Ingrese el título de la solicitud">
                     </div>
                     
                     <div class="form-group">
                         <label for="descripcion"><i class="fas fa-align-left"></i> Descripción</label>
-                        <textarea id="descripcion" name="descripcion" required placeholder="Describa los detalles de la tarea"></textarea>
+                        <textarea id="descripcion" name="descripcion" required placeholder="Describa los detalles de la solicitud"></textarea>
                     </div>
                     
                     <div class="form-group">
@@ -349,11 +349,11 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="fecha"><i class="fas fa-calendar-alt"></i> Fecha Límite</label>
+                        <label for="fecha"><i class="fas fa-calendar-alt"></i> Fecha Indicada</label>
                         <input type="date" id="fecha" name="fecha" required>
                     </div>
                     
-                    <h3><i class="fas fa-list-check"></i> Estados de la Tarea</h3>
+                    <h3><i class="fas fa-list-check"></i> Estados de la Solicitud</h3>
                     
                     <div class="estados-container">
                         <div class="estado-item">
@@ -452,7 +452,7 @@
 
     <script>
         // URL del Google Apps Script (debes reemplazar esto con tu URL después de desplegar el script)
-        const SCRIPT_URL = 'https://script.google.com/macros/s/ABCDEFG123456789/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznjCXUO1r38tkZJoEcvvgM9we-4i30gVNPaDYbXveMY_A86cFR9iBTBQxoMUx5w66D/exec';
         
         document.addEventListener('DOMContentLoaded', function() {
             const form = document.getElementById('tareaForm');
