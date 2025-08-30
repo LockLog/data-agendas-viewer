@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Actividades Profesionales</title>
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2980b9;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --warning-color: #f39c12;
+            --light-gray: #f5f5f5;
+            --dark-gray: #333;
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f9f9f9;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            margin-bottom: 30px;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+            color: var(--dark-gray);
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border 0.3s;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: background-color 0.3s;
+            width: 100%;
+        }
+        
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .error {
+            color: var(--danger-color);
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+        
+        .success-message {
+            background-color: var(--success-color);
+            color: white;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+        
+        .time-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        
+        .time-group input {
+            flex: 1;
+        }
+        
+        .activities-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 30px;
+        }
+        
+        .activities-table th, .activities-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .activities-table th {
+            background-color: var(--light-gray);
+            font-weight: 600;
+        }
+        
+        .activities-table tr:hover {
+            background-color: #f1f1f1;
+        }
+        
+        .conflict-warning {
+            background-color: #ffe6e6;
+            color: var(--danger-color);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .dias-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 5px;
+        }
+        
+        .dia-option {
+            padding: 8px 15px;
+            background-color: #f0f0f0;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .dia-option:hover {
+            background-color: #e0e0e0;
+        }
+        
+        .dia-option.selected {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group.full-width {
+                grid-column: span 1;
+            }
+            
+            .dias-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestión de Actividades Profesionales</h1>
+        
+        <div class="success-message" id="successMessage">
+            ¡Actividad guardada exitosamente!
+        </div>
+        
+        <div class="conflict-warning" id="conflictWarning">
+            ¡Advertencia! Existe un conflicto de horario con otra actividad.
+        </div>
+        
+        <form id="activityForm">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="servicio">Servicio:</label>
+                    <input type="text" id="servicio" name="servicio" required>
+                    <div class="error" id="servicioError">Por favor ingrese un servicio válido</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="profesional">Profesional:</label>
+                    <input type="text" id="profesional" name="profesional" required>
+                    <div class="error" id="profesionalError">Por favor ingrese un profesional válido</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="especialidad">Especialidad:</label>
+                    <select id="especialidad" name="especialidad" required>
+                        <option value="">Seleccione una especialidad</option>
+                        <option value="Medicina General">Medicina General</option>
+                        <option value="Pediatría">Pediatría</option>
+                        <option value="Cardiología">Cardiología</option>
+                        <option value="Dermatología">Dermatología</option>
+                        <option value="Oftalmología">Oftalmología</option>
+                        <option value="Otra">Otra</option>
+                    </select>
+                    <div class="error" id="especialidadError">Por favor seleccione una especialidad</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="ubicacion">Ubicación:</label>
+                    <input type="text" id="ubicacion" name="ubicacion" required>
+                    <div class="error" id="ubicacionError">Por favor ingrese una ubicación válida</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="actividad">Actividad:</label>
+                    <input type="text" id="actividad" name="actividad" required>
+                    <div class="error" id="actividadError">Por favor ingrese una actividad válida</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="dia">Día de la semana:</label>
+                    <input type="text" id="dia" name="dia" placeholder="Seleccione o escriba un día" required>
+                    <div class="error" id="diaError">Por favor seleccione un día válido</div>
+                    
+                    <div class="dias-container">
+                        <div class="dia-option" data-dia="Lunes">Lunes</div>
+                        <div class="dia-option" data-dia="Martes">Martes</div>
+                        <div class="dia-option" data-dia="Miércoles">Miércoles</div>
+                        <div class="dia-option" data-dia="Jueves">Jueves</div>
+                        <div class="dia-option" data-dia="Viernes">Viernes</div>
+                        <div class="dia-option" data-dia="Sábado">Sábado</div>
+                        <div class="dia-option" data-dia="Domingo">Domingo</div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Horario:</label>
+                    <div class="time-group">
+                        <input type="time" id="horaInicial" name="horaInicial" required>
+                        <span>a</span>
+                        <input type="time" id="horaFinal" name="horaFinal" required>
+                    </div>
+                    <div class="error" id="horaError">La hora final debe ser posterior a la hora inicial</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="cantidadHoras">Cantidad de horas:</label>
+                    <input type="number" id="cantidadHoras" name="cantidadHoras" min="0.5" step="0.5" required>
+                    <div class="error" id="cantidadHorasError">Por favor ingrese una cantidad válida (mínimo 0.5)</div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="rendimiento">Rendimiento (%):</label>
+                    <input type="number" id="rendimiento" name="rendimiento" min="0" max="100" required>
+                    <div class="error" id="rendimientoError">Por favor ingrese un valor entre 0 y 100</div>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="detalle">Detalle:</label>
+                    <textarea id="detalle" name="detalle"></textarea>
+                </div>
+            </div>
+            
+            <button type="submit" id="submitButton">Guardar Actividad</button>
+        </form>
+        
+        <h2 style="margin-top: 40px;">Actividades Registradas</h2>
+        <table class="activities-table">
+            <thead>
+                <tr>
+                    <th>Servicio</th>
+                    <th>Profesional</th>
+                    <th>Actividad</th>
+                    <th>Día</th>
+                    <th>Horario</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="activitiesList">
+                <!-- Las actividades se insertarán aquí dinámicamente -->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Almacenamiento de actividades
+            let actividades = JSON.parse(localStorage.getItem('actividades')) || [];
+            
+            // Referencias a elementos del DOM
+            const form = document.getElementById('activityForm');
+            const successMessage = document.getElementById('successMessage');
+            const conflictWarning = document.getElementById('conflictWarning');
+            const activitiesList = document.getElementById('activitiesList');
+            const diaInput = document.getElementById('dia');
+            const diaOptions = document.querySelectorAll('.dia-option');
+            
+            // Cargar actividades al iniciar
+            renderActivities();
+            
+            // Configurar opciones de días
+            diaOptions.forEach(option => {
+                option.addEventListener('click', function() {
+                    // Quitar selección anterior
+                    diaOptions.forEach(opt => opt.classList.remove('selected'));
+                    
+                    // Seleccionar la opción actual
+                    this.classList.add('selected');
+                    
+                    // Establecer el valor en el input
+                    diaInput.value = this.getAttribute('data-dia');
+                    
+                    // Ocultar mensaje de error si existe
+                    document.getElementById('diaError').style.display = 'none';
+                });
+            });
+            
+            // Calcular automáticamente la cantidad de horas
+            document.getElementById('horaInicial').addEventListener('change', calcularHoras);
+            document.getElementById('horaFinal').addEventListener('change', calcularHoras);
+            
+            // Validar el formulario al enviar
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                if (validarFormulario()) {
+                    const nuevaActividad = obtenerDatosFormulario();
+                    
+                    // Verificar conflictos de horario
+                    if (verificarConflictosHorario(nuevaActividad)) {
+                        conflictWarning.style.display = 'block';
+                        setTimeout(() => {
+                            conflictWarning.style.display = 'none';
+                        }, 5000);
+                        return;
+                    }
+                    
+                    // Guardar la actividad
+                    actividades.push(nuevaActividad);
+                    localStorage.setItem('actividades', JSON.stringify(actividades));
+                    
+                    // Mostrar mensaje de éxito
+                    successMessage.style.display = 'block';
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 3000);
+                    
+                    // Resetear formulario y actualizar lista
+                    form.reset();
+                    // Limpiar selección de días
+                    diaOptions.forEach(opt => opt.classList.remove('selected'));
+                    renderActivities();
+                }
+            });
+            
+            // Función para calcular horas automáticamente
+            function calcularHoras() {
+                const horaInicial = document.getElementById('horaInicial').value;
+                const horaFinal = document.getElementById('horaFinal').value;
+                
+                if (horaInicial && horaFinal) {
+                    const [hIni, mIni] = horaInicial.split(':').map(Number);
+                    const [hFin, mFin] = horaFinal.split(':').map(Number);
+                    
+                    let diffHoras = hFin - hIni;
+                    let diffMinutos = mFin - mIni;
+                    
+                    if (diffMinutos < 0) {
+                        diffHoras--;
+                        diffMinutos += 60;
+                    }
+                    
+                    const totalHoras = diffHoras + (diffMinutos / 60);
+                    
+                    if (totalHoras > 0) {
+                        document.getElementById('cantidadHoras').value = totalHoras.toFixed(1);
+                    }
+                }
+            }
+            
+            // Función para validar el formulario
+            function validarFormulario() {
+                let esValido = true;
+                
+                // Validar servicio
+                const servicio = document.getElementById('servicio');
+                if (!servicio.value.trim()) {
+                    document.getElementById('servicioError').style.display = 'block';
+                    esValido = false;
+                } else {
+                    document.getElementById('servicioError').style.display = 'none';
+                }
+                
+                // Validar profesional
+                const profesional = document.getElementById('profesional');
+                if (!profesional.value.trim()) {
+                    document.getElementById('profesionalError').style.display = 'block';
+                    esValido = false;
+                } else {
+                    document.getElementById('profesionalError').style.display = 'none';
+                }
+                
+                // Validar especialidad
+                const especialidad = document.getElementById('especialidad');
+                if (!especialidad.value) {
+                    document.getElementById('especialidadError').style.display = 'block';
+                    esValido = false;
+                } else {
+                    document.getElementById('especialidadError').style.display = 'none';
+                }
+                
+                // Validar ubicación
+                const ubicacion = document.getElementById('ubicacion');
+                if (!ubicacion.value.trim()) {
+                    document.getElementById('ubicacionError').style.display = 'block';
+                    esValido = false;
+                } else {
+                    document.getElementById('ubicacionError').style.display = 'none';
+                }
+                
+                // Validar actividad
+                const actividad = document.getElementById('actividad');
+                if (!actividad.value.trim()) {
+                    document.getElementById('actividadError').style.display = 'block';
+                    esValido = false;
+                } else {
+                    document.getElementById('actividadError').style.display = 'none';
+                }
+                
+                // Validar día
+                const dia = document.getElementById('dia');
+                const diasValidos = ['lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado', 'domingo'];
+                if (!dia.value.trim() || !diasValidos.includes(dia.value.toLowerCase())) {
+                    document.getElementById('diaError').style.display = 'block';
+                    esValido = false;
+                } else {
+                    document.getElementById('diaError').style.display = 'none';
+                }
+                
+                // Validar horario
+                const horaInicial = document.getElementById('horaInicial').value;
+                const horaFinal = document.getElementById('horaFinal').value;
+                
+                if (!horaInicial || !horaFinal || horaFinal <= horaInicial) {
+                    document.getElementById('horaError').style.display = 'block';
+                    esValido = false;
+                } else {
+                    document.getElementById('horaError').style.display = 'none';
+                }
+                
+                // Validar cantidad de horas
+                const cantidadHoras = document.getElementById('cantidadHoras');
+                if (!cantidadHoras.value || cantidadHoras.value < 0.5) {
+                    document.getElementById('cantidadHorasError').style.display = 'block';
+                    esValido = false;
+                } else {
+                    document.getElementById('cantidadHorasError').style.display = 'none';
+                }
+                
+                // Validar rendimiento
+                const rendimiento = document.getElementById('rendimiento');
+                if (!rendimiento.value || rendimiento.value < 0 || rendimiento.value > 100) {
+                    document.getElementById('rendimientoError').style.display = 'block';
+                    esValido = false;
+                } else {
+                    document.getElementById('rendimientoError').style.display = 'none';
+                }
+                
+                return esValido;
+            }
+            
+            // Función para obtener datos del formulario
+            function obtenerDatosFormulario() {
+                return {
+                    id: Date.now(), // ID único basado en timestamp
+                    servicio: document.getElementById('servicio').value,
+                    profesional: document.getElementById('profesional').value,
+                    especialidad: document.getElementById('especialidad').value,
+                    ubicacion: document.getElementById('ubicacion').value,
+                    actividad: document.getElementById('actividad').value,
+                    detalle: document.getElementById('detalle').value,
+                    dia: document.getElementById('dia').value,
+                    horaInicial: document.getElementById('horaInicial').value,
+                    horaFinal: document.getElementById('horaFinal').value,
+                    cantidadHoras: document.getElementById('cantidadHoras').value,
+                    rendimiento: document.getElementById('rendimiento').value
+                };
+            }
+            
+            // Función para verificar conflictos de horario
+            function verificarConflictosHorario(nuevaActividad) {
+                for (const actividad of actividades) {
+                    // Solo verificar conflictos para el mismo día y profesional
+                    if (actividad.dia.toLowerCase() === nuevaActividad.dia.toLowerCase() && 
+                        actividad.profesional === nuevaActividad.profesional) {
+                        
+                        // Convertir horas a minutos para facilitar la comparación
+                        const nuevaInicio = tiempoAMinutos(nuevaActividad.horaInicial);
+                        const nuevaFin = tiempoAMinutos(nuevaActividad.horaFinal);
+                        const existenteInicio = tiempoAMinutos(actividad.horaInicial);
+                        const existenteFin = tiempoAMinutos(actividad.horaFinal);
+                        
+                        // Verificar si hay superposición de horarios
+                        if ((nuevaInicio >= existenteInicio && nuevaInicio < existenteFin) ||
+                            (nuevaFin > existenteInicio && nuevaFin <= existenteFin) ||
+                            (nuevaInicio <= existenteInicio && nuevaFin >= existenteFin)) {
+                            return true; // Hay conflicto
+                        }
+                    }
+                }
+                return false; // No hay conflictos
+            }
+            
+            // Función auxiliar para convertir tiempo a minutos
+            function tiempoAMinutos(tiempo) {
+                const [horas, minutos] = tiempo.split(':').map(Number);
+                return horas * 60 + minutos;
+            }
+            
+            // Función para renderizar la lista de actividades
+            function renderActivities() {
+                activitiesList.innerHTML = '';
+                
+                if (actividades.length === 0) {
+                    activitiesList.innerHTML = `
+                        <tr>
+                            <td colspan="6" style="text-align: center;">No hay actividades registradas</td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Ordenar actividades por día y hora
+                const ordenDias = {
+                    'lunes': 1, 'martes': 2, 'miércoles': 3, 'jueves': 4, 
+                    'viernes': 5, 'sábado': 6, 'domingo': 7
+                };
+                
+                actividades.sort((a, b) => {
+                    const diaA = a.dia.toLowerCase();
+                    const diaB = b.dia.toLowerCase();
+                    
+                    if (ordenDias[diaA] !== ordenDias[diaB]) {
+                        return ordenDias[diaA] - ordenDias[diaB];
+                    }
+                    return a.horaInicial.localeCompare(b.horaInicial);
+                });
+                
+                actividades.forEach(actividad => {
+                    const tr = document.createElement('tr');
+                    
+                    tr.innerHTML = `
+                        <td>${actividad.servicio}</td>
+                        <td>${actividad.profesional}</td>
+                        <td>${actividad.actividad}</td>
+                        <td>${actividad.dia}</td>
+                        <td>${actividad.horaInicial} - ${actividad.horaFinal}</td>
+                        <td>
+                            <button onclick="eliminarActividad(${actividad.id})" style="background-color: var(--danger-color); padding: 5px 10px; font-size: 14px;">
+                                Eliminar
+                            </button>
+                        </td>
+                    `;
+                    
+                    activitiesList.appendChild(tr);
+                });
+            }
+            
+            // Hacer la función eliminarActividad global para que funcione en los botones
+            window.eliminarActividad = function(id) {
+                if (confirm('¿Está seguro de que desea eliminar esta actividad?')) {
+                    actividades = actividades.filter(a => a.id !== id);
+                    localStorage.setItem('actividades', JSON.stringify(actividades));
+                    renderActivities();
+                }
+            };
+        });
+    </script>
+</body>
+</html>
